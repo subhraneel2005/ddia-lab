@@ -29,9 +29,11 @@ function startWorker() {
         startWorker();
       }, 1000);
     }
-    console.log(
-      `[worker ${worker.pid}] completed successfully`,
-    );
+    else{
+      console.log(
+        `[worker ${worker.pid}] completed successfully`,
+      );
+    }
   });
 
   worker.on("spawn", () => {

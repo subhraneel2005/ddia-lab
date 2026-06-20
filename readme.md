@@ -82,7 +82,7 @@ worker/subProcess pid: 29793
 
 ## Now Working On
 
-* Heartbeats between worker and supervisor.
+* Heartbeats between worker and supervisor. (Done)
 * Detect hung workers, not just crashed workers.
 * Restart backoff strategy.
 * Multiple workers.

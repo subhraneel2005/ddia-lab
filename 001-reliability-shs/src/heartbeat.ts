@@ -1,10 +1,11 @@
 export enum MessageType {
   heartbeat = "heartbeat",
+  heartbeatStopped = "heartbeat stopped",
   doingTask = "doing task"
 }
 
 export function sendHearbeat(intervalTime: number) {
-  setInterval(() => {
+  return setInterval(() => {
     console.log(
       JSON.stringify({
         type: MessageType.heartbeat,

@@ -1,24 +1,80 @@
-import type { ChildProcessByStdio } from "child_process";
 import { MessageType, sendHearbeat } from "./heartbeat.js";
-import { Stream } from "stream";
+import { WorkerType } from "./worker-types.js";
 
-function runWorker() {
+const workerTypes = Object.values(WorkerType)
+const workerType = workerTypes[Math.floor(Math.random() * workerTypes.length)]
+
+
+function normalWorker() {
   console.log(
     JSON.stringify({
       type: MessageType.doingTask,
       timestamp: Date.now(),
+      workerType: WorkerType.normal
     }),
   );
 
-  if (Math.random() < 0.1) {
-    throw Error("boom 💥");
-  }
-
-  sendHearbeat(4500);
+  sendHearbeat(3000);
 
   setTimeout(() => {
-    process.exit(0)
-  },4500*4)
+    process.exit(0);
+  }, 3000 * 3);
 }
 
-runWorker();
+function hungWorker() {
+  console.log(
+    JSON.stringify({
+      type: MessageType.doingTask,
+      timestamp: Date.now(),
+      workerType: WorkerType.hung
+    }),
+  );
+
+  const hb = sendHearbeat(3000);
+
+  setTimeout(() => {
+    clearInterval(hb);
+    console.log(JSON.stringify({
+      type: MessageType.heartbeatStopped,
+      timestamp: Date.now(),
+    }));
+    while (true) {}
+  }, 5000);
+}
+
+function crashWorker() {
+  console.log(
+    JSON.stringify({
+      type: MessageType.doingTask,
+      timestamp: Date.now(),
+      workerType: WorkerType.crashed
+    }),
+  );
+
+  sendHearbeat(3000);
+
+  throw Error("boom 💥");
+}
+
+function runWorker(){
+  switch (workerType) {
+    case WorkerType.normal:
+      normalWorker()
+      break;
+
+    case WorkerType.hung:
+      hungWorker()
+      break;
+
+    case WorkerType.crashed:
+      crashWorker()
+      break;
+  
+    default:
+     throw new Error("Invalid Worker Type")
+  }
+}
+
+runWorker()
+
+export { normalWorker, hungWorker, crashWorker };

@@ -80,11 +80,45 @@ worker/subProcess pid: 29793
 [worker 29793] completed successfully
 ```
 
+## Recent Additions
+
+### Worker Types
+
+The worker now randomly picks one of three behaviors at startup:
+
+| Type | Behavior |
+|---|---|
+| `normal` | Sends heartbeats every 3s, exits cleanly after 9s. |
+| `hung` | Sends heartbeats for 5s, then stops and enters an infinite loop. The supervisor detects the missing heartbeats and kills it. |
+| `crashed` | Sends a few heartbeats, then throws an error and exits with code 1. |
+
+Worker types are defined in `src/worker-types.ts`.
+
+### Heartbeats
+
+Workers send periodic JSON heartbeat messages on stdout. The supervisor parses these to track liveness:
+
+```
+{"type":"heartbeat","timestamp":...}
+```
+
+If the supervisor sees no heartbeat for **10 seconds**, it kills the worker (triggering a restart). The hung worker type demonstrates this — it stops heartbeats after 5s and enters an infinite loop, and the supervisor detects the silence and terminates it.
+
+Heartbeat logic lives in `src/heartbeat.ts` (`MessageType` enum, `sendHeartbeat()` helper).
+
+### Retry & Backoff
+
+The supervisor limits restarts to **10 consecutive failures** (`MAX_RETRIES`):
+
+* Waits **1 second** before restarting a crashed worker.
+* Resets the retry counter to 0 if the worker ever exits successfully (code 0).
+* Stops restarting entirely if the limit is reached.
+
+This prevents infinite restart loops while still recovering from transient failures.
+
 ## Now Working On
 
-* Heartbeats between worker and supervisor. (Done)
-* Detect hung workers, not just crashed workers.
-* Restart backoff strategy.
+* Restart backoff strategy (exponential).
 * Multiple workers.
 * Worker health checks.
 * Supervisor metrics and logging.
